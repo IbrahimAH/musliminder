@@ -1,0 +1,54 @@
+{
+	"method": {
+		"0": "Shia Ithna-Ansari",
+		"1": "University of Islamic Sciences, Karachi",
+		"2": "Islamic Society of North America",
+		"3": "Default (Muslim World League)",
+		"4": "Umm Al-Qura University, Makkah",
+		"5": "Egyptian General Authority of Survey",
+		"7": "Institute of Geophysics, University of Tehran",
+		"8": "Gulf Region",
+		"9": "Kuwait",
+		"10": "Qatar",
+		"11": "Majlis Ugama Islam Singapura, Singapore",
+		"12": "Union Organization islamic de France",
+		"13": "Diyanet İşleri Başkanlığı, Turkey",
+		"14": "Spiritual Administration of Muslims of Russia"		
+	},
+	"methodInv": {
+		"Shia Ithna-Ansari" : "0",
+		"University of Islamic Sciences, Karachi" : "1",
+		"Islamic Society of North America" : "2",
+		"Default (Muslim World League)" : "3",
+		"Umm Al-Qura University, Makkah" : "4",
+		"Egyptian General Authority of Survey" : "5",
+		"Institute of Geophysics, University of Tehran" : "7",
+		"Gulf Region" : "8",
+		"Kuwait" : "9",
+		"Qatar" : "10",
+		"Majlis Ugama Islam Singapura, Singapore" : "11",
+		"Union Organization islamic de France" : "12",
+		"Diyanet İşleri Başkanlığı, Turkey" : "13",
+		"Spiritual Administration of Muslims of Russia" : "14"		
+	},
+	"school": {
+		"0": "Default (Hanbali, Maliki, Shafi)",
+		"1": "Hanafi"	
+	},
+	"midnightMode": {
+		"0": "Default (Mid Sunset to Sunrise)",
+		"1": "Jafari (Mid Sunset to Fajr)"	
+	},
+	"latitude": {
+		"0": "Default",
+		"1": "Middle of the Night",
+		"2": "One Seventh",
+		"3": "Angle Based"
+	},
+	"latitudeInv": {
+		"Default" : "0",
+		"Middle of the Night" : "1",
+		"One Seventh" : "2",
+		"Angle Based" : "3"
+	}
+}
