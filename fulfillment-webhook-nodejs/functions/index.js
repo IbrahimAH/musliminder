@@ -25,8 +25,8 @@ process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
 
 exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, response) => {
   const agent = new WebhookClient({ request, response });
-  console.log(`Dialogflow Request headers: ${JSON.stringify(request.headers)}`);
-  console.log(`Dialogflow Request body: ${JSON.stringify(request.body)}`);
+  // console.log(`Dialogflow Request headers: ${JSON.stringify(request.headers)}`);
+  // console.log(`Dialogflow Request body: ${JSON.stringify(request.body)}`);
 
   // get details if person messaging through facebook
   let psid = null;
@@ -355,7 +355,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
       var url = `https://gopray.com.au/?gmw_post=place&gmw_address%5B%5D=Locations+Near+You&gmw_distance=50&gmw_units=metric&gmw_form=1&paged=1&gmw_per_page=1&gmw_lat=${latString}&gmw_lng=${longString}&gmw_px=pt&action=gmw_post`;
       agent.add(`Looking for locations on "gopray": \n${url}`); // make gopray url out of info
     } catch (err) {
-      agentResponses.push("Something went wrong. If you'd like to report it, take a screenshot of the conversation and send it to ibrahapps@gmail.com");
+      agent.add("Something went wrong. If you'd like to report it, take a screenshot of the conversation and send it to ibrahapps@gmail.com");
       console.error(err);
     }
     // get iqamah times at nearby mosques
@@ -369,9 +369,9 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
         console.log('scraping complete!');
       });
 
-    for (const messages of agentResponses) {
+    for (const messages of agentResponses) 
       agent.add(messages);
-    }
+    
     return;
   }
 
@@ -397,7 +397,6 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   function scrapeMosqueTimes(html) {
     var times = "";
     const soup = new JSSoup(html);
-    console.log('scraping mosque times');
     if (soup.find('div', 'place-prayer-times')) {
       let name = soup.find('title').text; // name of mosque
       name = name.slice(0, -11);
