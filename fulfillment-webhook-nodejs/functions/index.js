@@ -5,7 +5,6 @@
 const axios = require('axios'); // for get requests
 const latinize = require('latinize'); // to remove special characters from text
 const JSSoup = require('jssoup').default; // web scraping
-const request = require('request');
 const rp = require('request-promise'); // simpler promises for web scraper
 
 const functions = require('firebase-functions');
@@ -306,7 +305,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     } else agent.add('Sorry, settings cannot be changed for your account');
   }
 
-  // set favourite location using users provided city and country
+  // set favourite location using users' provided city and country
   async function favouriteWithLocation(agent) {
     if (psid != null) {
       const snapshot = await admin.database().ref(`users/${psid}`).once('value');
@@ -347,29 +346,33 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     } else agent.add('Sorry, settings cannot be changed for your account');
   }
 
+  var agentResponses = [];
   async function test(agent) {
     try {
-      const hello = 'hello';
       const location = agent.getContext('facebook_location').parameters; // get lat and long from fb location card
       const latString = location.lat.toString();
       const longString = location.long.toString();
-      console.log(url);
-      var url = `https://gopray.com.au/?gmw_post=place&gmw_address%5B%5D=Locations+Near+You&gmw_distance=50&gmw_units=metric&gmw_form=1&paged=1&gmw_per_page=2&gmw_lat=${latString}&gmw_lng=${longString}&gmw_px=pt&action=gmw_post`;
+      var url = `https://gopray.com.au/?gmw_post=place&gmw_address%5B%5D=Locations+Near+You&gmw_distance=50&gmw_units=metric&gmw_form=1&paged=1&gmw_per_page=1&gmw_lat=${latString}&gmw_lng=${longString}&gmw_px=pt&action=gmw_post`;
       agent.add(`Looking for locations on "gopray": \n${url}`); // make gopray url out of info
     } catch (err) {
-      agent.add("Something went wrong. If you'd like to report it, take a screenshot of the conversation and send it to ibrahapps@gmail.com");
+      agentResponses.push("Something went wrong. If you'd like to report it, take a screenshot of the conversation and send it to ibrahapps@gmail.com");
       console.error(err);
     }
     // get iqamah times at nearby mosques
-    rp(url)
+    await rp(url)
       .then(scrapeMosques) // scrape for mosques in the gopray url
       .catch((err) => {
         console.error(`error whilst scraping mosques: ${err}`);
-        agent.add('No prayer locations could be found near you :( This feature is currently only for Australia');
+        agent.add('No prayer locations could be found near you :( This feature is currently only available for Australia');
       })
       .finally(() => {
         console.log('scraping complete!');
       });
+
+    for (const messages of agentResponses) {
+      agent.add(messages);
+    }
+    return;
   }
 
   // scrape the list of mosques nearby from gopray url
@@ -380,39 +383,39 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
       const mosques = wrapper.findAll('a'); // get the mosques element
       const mosqueurls = mosques.map((mosque) => mosque.attrs.href); // get the urls of the mosque pages
       console.log(mosqueurls);
-      mosqueurls.forEach((mosqueurl) => { // scrape each url
-        rp(mosqueurl)
+      for (const mosqueurl of mosqueurls) {
+        await rp(mosqueurl)
 	      .then(scrapeMosqueTimes) // scrape the iqamah times of each mosque
 	      .catch((err) => {
             console.error(`error whilst scraping mosque times: ${err}`);
           });
-      });
+      }
     } else console.error('Failed soup, probably no mosques');
+    return;
   }
 
-  async function scrapeMosqueTimes(html) {
+  function scrapeMosqueTimes(html) {
+    var times = "";
     const soup = new JSSoup(html);
     console.log('scraping mosque times');
     if (soup.find('div', 'place-prayer-times')) {
       let name = soup.find('title').text; // name of mosque
       name = name.slice(0, -11);
-      console.log(name);
+      agentResponses.push(name + `\n`);
       const address = soup.find('div', 'place-location').find('a').attrs.href; // address of mosque on google maps
-      console.log(address);
+      agentResponses.push(address + `\n`);
       const wrapper = soup.find('div', 'place-prayer-times');
       const table = wrapper.find('table');
       let rows = table.findAll('tr');
       rows = rows.map((row) => {
-        if (row.find('th')) {
-          const th = row.find('th').text;
-          console.log(th);
-        }
-        if (row.find('td')) {
-          const td = row.find('td').text;
-          console.log(td);
-        }
+        if (row.find('th')) 
+          times += row.find('th').text + `: `;
+        if (row.find('td')) 
+          times += row.find('td').text + `\n`;
       });
+    agentResponses.push(times + `\n`);
     } else console.error('Failed soup, no place prayer times');
+    return;
   }
 
   // Run the proper function handler based on the matched Dialogflow intent name
