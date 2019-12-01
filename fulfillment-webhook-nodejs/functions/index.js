@@ -347,13 +347,13 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   }
 
   var agentResponses = [];
-  async function test(agent) {
+  async function mosques(agent) {
     try {
       const location = agent.getContext('facebook_location').parameters; // get lat and long from fb location card
       const latString = location.lat.toString();
       const longString = location.long.toString();
-      var url = `https://gopray.com.au/?gmw_post=place&gmw_address%5B%5D=Locations+Near+You&gmw_distance=50&gmw_units=metric&gmw_form=1&paged=1&gmw_per_page=1&gmw_lat=${latString}&gmw_lng=${longString}&gmw_px=pt&action=gmw_post`;
-      agent.add(`Looking for locations on "gopray": \n${url}`); // make gopray url out of info
+      var url = `https://gopray.com.au/?gmw_post=place&gmw_address%5B%5D=Locations&gmw_distance=50&gmw_units=metric&gmw_form=1&paged=1&gmw_per_page=2&gmw_lat=${latString}&gmw_lng=${longString}&gmw_px=pt&action=gmw_post`;
+      agentResponses.push(`Looking for prayer locations near you: \n${url}`); // make gopray url out of info
     } catch (err) {
       agent.add("Something went wrong. If you'd like to report it, take a screenshot of the conversation and send it to ibrahapps@gmail.com");
       console.error(err);
@@ -376,24 +376,79 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   }
 
   // scrape the list of mosques nearby from gopray url
-  async function scrapeMosques(html) {
+  function scrapeMosques(html) {
     const soup = new JSSoup(html);
     if (soup.find('ul', 'posts-list-wrapper')) { // if theres a list of mosques on gopray
       const wrapper = soup.find('ul', 'posts-list-wrapper');
       const mosques = wrapper.findAll('a'); // get the mosques element
       const mosqueurls = mosques.map((mosque) => mosque.attrs.href); // get the urls of the mosque pages
-      console.log(mosqueurls);
-      for (const mosqueurl of mosqueurls) {
-        await rp(mosqueurl)
-	      .then(scrapeMosqueTimes) // scrape the iqamah times of each mosque
-	      .catch((err) => {
-            console.error(`error whilst scraping mosque times: ${err}`);
-          });
-      }
-    } else console.error('Failed soup, probably no mosques');
+      if (mosqueurls.length == 2)
+        agent.setContext({
+          "name": 'urls', "lifespan": 3,
+          "parameters":{"intro" : agentResponses[0], "m1": mosqueurls[0], "m2": mosqueurls[1]}
+        });
+      else if (mosqueurls.length == 1)
+        agent.setContext({
+          "name": 'urls', "lifespan": 3,
+          "parameters":{"intro" : agentResponses[0], "m1": mosqueurls[0]}
+        });
+      agent.setFollowupEvent('get-times'); // each intent has 5 second timeout, so call another intent to extend timeout
+    } else agentResponses.push('No prayer locations could be found near you :( This feature is currently only available in Australia');
     return;
   }
 
+  // get times of first mosque
+  async function mosques2(agent) {
+    var context = agent.getContext('urls').parameters;
+    var mosques = Object.keys(context).length;
+    
+    await rp(context.m1)
+      .then(scrapeMosqueTimes) // scrape the iqamah times of each mosque
+      .catch((err) => {
+        console.error(`error whilst scraping mosque times: ${err}`);
+      });
+
+    if (mosques > 2) {
+      agent.setContext({
+        "name": 'urls', "lifespan": 2,
+        "parameters":{"intro" : context.intro, "m2": context.m2, "m1name": agentResponses[0], "m1address": agentResponses[1], "m1times": agentResponses[2]}
+      });
+      agent.setFollowupEvent('get-times2'); // each intent has 5 second timeout, so call another intent to extend timeout
+    }
+    else {
+      agent.add(context.intro);
+      for (const messages of agentResponses) 
+        agent.add(messages);
+    }
+    
+    return;
+  }
+
+  // get times of second mosque
+  async function mosques3(agent) {
+
+    var context = agent.getContext('urls').parameters;
+    agent.add(context.intro);
+    
+    //check second closest mosque
+    await rp(context.m2)
+      .then(scrapeMosqueTimes) // scrape the iqamah times of each mosque
+      .catch((err) => {
+        console.error(`error whilst scraping mosque times: ${err}`);
+      });
+
+    //add times of the first mosque checked
+    agent.add(context.m1name);
+    agent.add(context.m1address);
+    agent.add(context.m1times);
+
+    for (const messages of agentResponses) 
+      agent.add(messages);
+    
+    return;
+  }
+
+  // scrape times from a mosques page
   function scrapeMosqueTimes(html) {
     var times = "";
     const soup = new JSSoup(html);
@@ -432,6 +487,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   intentMap.set('Favourite Without Location - Set - Location', favouriteWithLocation);
   intentMap.set('Favourite With Location', favouriteWithLocation);
   intentMap.set('Favourite Get Times', favouriteGetTimes);
-  intentMap.set('testloc', test);
+  intentMap.set('Location Sent', mosques);
+  intentMap.set('Get Mosque Times', mosques2);  
+  intentMap.set('Get Mosque Times2', mosques3);  
   agent.handleRequest(intentMap);
 });
