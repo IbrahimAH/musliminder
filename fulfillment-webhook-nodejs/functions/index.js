@@ -451,7 +451,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
         }
       });
     }
-    else console.error("no place prayer times");
+    else console.error("Failed soup, no place prayer times");
     return;
   }
 
