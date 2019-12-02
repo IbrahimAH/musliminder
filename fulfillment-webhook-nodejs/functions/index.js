@@ -1,6 +1,4 @@
-// See https://github.com/dialogflow/dialogflow-fulfillment-nodejs
-// for Dialogflow fulfillment library docs, samples, and to report issues
-
+// https://github.com/dialogflow/dialogflow-fulfillment-nodejs
 
 const axios = require('axios'); // for get requests
 const latinize = require('latinize'); // to remove special characters from text
