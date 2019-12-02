@@ -93,7 +93,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   async function prayerTime1DayCity(agent) {
     // get city and country from user
     let lowerCity = agent.parameters.city;
-    lowerCity = `${lowerCity.city}${lowerCity['street-address']} ${lowerCity.island}${lowerCity['subadmin-area']}${lowerCity['admin-area']}`;
+    lowerCity = `${lowerCity['street-address']}${lowerCity.city} ${lowerCity.island}${lowerCity['subadmin-area']}${lowerCity['admin-area']}`;
     let city = lowerCity.charAt(0).toUpperCase() + lowerCity.substring(1); // make first letter uppercase for aesthetics
     city = latinize(lowerCity);
     if (lowerCity === ' ') { return agent.add('Sorry, I couldn\'t find times for this location. Please check spelling or try another location'); }
@@ -155,14 +155,21 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     // agent.add(`*This bot is currently undergoing testing. Check back soon for its release*`);
     // return; // comment out return axios below to stop api calls to prayer api during testing
     // use axios to send api get request for todays prayer times
-    return axios.get(urlTimes).then((result) => {
+    try {
+      let result = await axios.get(urlTimes);
       const { timings } = result.data.data;
-      agent.add(`Imsak: ${timings.Imsak}\nFajr: ${timings.Fajr}\nSunrise: ${timings.Sunrise
+      let { meta } = await result.data.data;
+      const prayertimes = `Imsak: ${timings.Imsak}\nFajr: ${timings.Fajr}\nSunrise: ${timings.Sunrise
       }\nDhuhr: ${timings.Dhuhr}\nAsr: ${timings.Asr}\nMaghrib: ${timings.Maghrib
-      }\nIsha: ${timings.Isha}\nMidnight: ${timings.Midnight}`);
-    })
-      .catch((error) => {
-        if (error.response) {
+      }\nIsha: ${timings.Isha}\nMidnight: ${timings.Midnight}`;
+      
+      var locString = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${meta.latitude},${meta.longitude}&key=${keys.mapsapi}`;
+      let result1 = await axios.get(locString);
+      agent.add(result1.data.results[0]["formatted_address"]);
+      agent.add(prayertimes);
+    }
+    catch(error) {
+      if (error.response) {
         // The request was made and the server responded with a status code that falls out of the range of 2xx
           console.log(`${city}, ${country}`);
           console.error(error.response.data);
@@ -177,7 +184,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
           agent.add('Sorry, the service is temporarily down. Please try again later.');
         }
         console.log(error.config);
-      });
+    }
+    return;
   }
 
   // print out users preferences
@@ -312,7 +320,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
       if (snapshot.exists()) {
         // get values from db
         let lowerCity = agent.parameters.city; // make first letter uppercase for aesthetics
-        lowerCity = `${lowerCity.city}${lowerCity['street-address']} ${lowerCity.island}${lowerCity['subadmin-area']}${lowerCity['admin-area']}`;
+        lowerCity = `${lowerCity['street-address']}${lowerCity.city} ${lowerCity.island}${lowerCity['subadmin-area']}${lowerCity['admin-area']}`;
         const favouriteCity = lowerCity.charAt(0).toUpperCase() + lowerCity.substring(1);
         if (lowerCity === ' ') { return agent.add('Sorry, I couldn\'t find this location. Please check spelling or try another location'); }
         const favouriteCountry = agent.parameters.country;
