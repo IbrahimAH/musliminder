@@ -12,6 +12,7 @@ const { WebhookClient } = require('dialogflow-fulfillment');
 
 const admin = require('firebase-admin');
 const settingsJson = require('./settings.json'); // different calculation method settings
+const keys = require('./keys.json');
 
 // initialise DB connection
 const serviceAccount = require('./serviceAccountKey.json');
@@ -57,7 +58,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
           agent.add('Assalamualaikum Warahmatullahi Wabarakatuh');
           agent.add('I can provide prayer times for any location. Simply reply with a city and country to get started. E.g. "Prayer times for Sydney, Australia"');
           agent.add('Or type "Settings" to change calculation settings and set your favourite location');
-          axios.get(`https://graph.facebook.com/${psid}?fields=first_name,last_name&access_token=EAAK6RBQZCcEsBAIBZCmbwVJfO6ncteYLPi9dV5dk8Tts3MvwtN4ll5GhiAXPndh4ZBq6ZBWjviw0zEqLWqjzE1PhMTwOeATCDx46ZAKEjytEHINn7lw0sHLZA06eBCstJzcHzCasaUoPcGX0fiPDXrj7xYOkx5j6jQKTsHVd7ZBvMdsmLKZC5aSHVcxdn03TDvoZD	`)
+          axios.get(`https://graph.facebook.com/${psid}?fields=first_name,last_name&access_token=${keys.facebookapi}`)
             .then((result) => {
               firstName = result.data.first_name;
               lastName = result.data.last_name;
@@ -94,7 +95,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   async function prayerTime1DayCity(agent) {
     // get city and country from user
     let lowerCity = agent.parameters.city;
-    lowerCity = `${lowerCity.city} ${lowerCity.island}${lowerCity['subadmin-area']}${lowerCity['admin-area']}`;
+    lowerCity = `${lowerCity.city}${lowerCity['street-address']} ${lowerCity.island}${lowerCity['subadmin-area']}${lowerCity['admin-area']}`;
     let city = lowerCity.charAt(0).toUpperCase() + lowerCity.substring(1); // make first letter uppercase for aesthetics
     city = latinize(lowerCity);
     if (lowerCity === ' ') { return agent.add('Sorry, I couldn\'t find times for this location. Please check spelling or try another location'); }
@@ -122,7 +123,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
         agent.add(`Today's prayer times based on your settings for ${city}, ${country}`);
       } else {
         agent.add(`Today's prayer times using default settings for ${city}, ${country}`);
-        axios.get(`https://graph.facebook.com/${psid}?fields=first_name,last_name&access_token=EAAK6RBQZCcEsBAIBZCmbwVJfO6ncteYLPi9dV5dk8Tts3MvwtN4ll5GhiAXPndh4ZBq6ZBWjviw0zEqLWqjzE1PhMTwOeATCDx46ZAKEjytEHINn7lw0sHLZA06eBCstJzcHzCasaUoPcGX0fiPDXrj7xYOkx5j6jQKTsHVd7ZBvMdsmLKZC5aSHVcxdn03TDvoZD	`)
+        axios.get(`https://graph.facebook.com/${psid}?fields=first_name,last_name&access_token=${keys.facebookapi}`)
           .then((result) => {
             firstName = result.data.first_name;
             lastName = result.data.last_name;
@@ -313,7 +314,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
       if (snapshot.exists()) {
         // get values from db
         let lowerCity = agent.parameters.city; // make first letter uppercase for aesthetics
-        lowerCity = `${lowerCity.city} ${lowerCity.island}${lowerCity['subadmin-area']}${lowerCity['admin-area']}`;
+        lowerCity = `${lowerCity.city}${lowerCity['street-address']} ${lowerCity.island}${lowerCity['subadmin-area']}${lowerCity['admin-area']}`;
         const favouriteCity = lowerCity.charAt(0).toUpperCase() + lowerCity.substring(1);
         if (lowerCity === ' ') { return agent.add('Sorry, I couldn\'t find this location. Please check spelling or try another location'); }
         const favouriteCountry = agent.parameters.country;
