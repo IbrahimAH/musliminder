@@ -118,9 +118,9 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
         urlTimes += `&school=${snapshot.child('school').val()}`;
         const latMethod = snapshot.child('latitude').val();
         if (latMethod != 0) urlTimes += `&latitideAdjustmentMethod=${snapshot.child('latitude').val()}`;
-        agent.add(`Today's prayer times based on your settings for ${city}, ${country}`);
+        agent.add(`Today's prayer times based on your settings`);
       } else {
-        agent.add(`Today's prayer times using default settings for ${city}, ${country}`);
+        agent.add(`Today's prayer times using default settings`);
         axios.get(`https://graph.facebook.com/${psid}?fields=first_name,last_name&access_token=${keys.facebookapi}`)
           .then((result) => {
             firstName = result.data.first_name;
@@ -148,7 +148,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
         urlTimes += '&method=3';
       }
     } else {
-      agent.add(`Today's prayer times using default settings for ${city}, ${country}`);
+      agent.add(`Today's prayer times using default settings:`);
       urlTimes += '&method=3';
     }
     console.log(urlTimes);
@@ -165,7 +165,9 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
       
       var locString = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${meta.latitude},${meta.longitude}&key=${keys.mapsapi}`;
       let result1 = await axios.get(locString);
-      agent.add(result1.data.results[0]["formatted_address"]);
+      var address = result1.data.results[0]["address_components"];
+      // For SUBURB STATE POSTCODE, COUNTRYCODE
+      agent.add(`For ${address[2].short_name} ${address[4].short_name} ${address[6].short_name}, ${address[5].long_name}`);
       agent.add(prayertimes);
     }
     catch(error) {
