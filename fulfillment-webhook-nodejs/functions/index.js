@@ -154,20 +154,32 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     console.log(urlTimes);
     // agent.add(`*This bot is currently undergoing testing. Check back soon for its release*`);
     // return; // comment out return axios below to stop api calls to prayer api during testing
-    // use axios to send api get request for todays prayer times
     try {
-      let result = await axios.get(urlTimes);
+      // use axios to send api get request for todays prayer times
+      let result = await axios.get(urlTimes); 
       const { timings } = result.data.data;
-      let { meta } = await result.data.data;
+      let { meta } = await result.data.data; // get coordinates
       const prayertimes = `Imsak: ${timings.Imsak}\nFajr: ${timings.Fajr}\nSunrise: ${timings.Sunrise
       }\nDhuhr: ${timings.Dhuhr}\nAsr: ${timings.Asr}\nMaghrib: ${timings.Maghrib
       }\nIsha: ${timings.Isha}\nMidnight: ${timings.Midnight}`;
-      
+      // use coordinates to get request location using google geocoding api
       var locString = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${meta.latitude},${meta.longitude}&key=${keys.mapsapi}`;
+      console.log(locString);
       let result1 = await axios.get(locString);
       var address = result1.data.results[0]["address_components"];
-      // For SUBURB STATE POSTCODE, COUNTRYCODE
-      agent.add(`For ${address[2].short_name} ${address[4].short_name} ${address[6].short_name}, ${address[5].long_name}`);
+      var suburb, state, postcode, countrycode;
+      for (var i = 0; i < address.length; i++) {
+        if (address[i].types.indexOf("locality") > -1) // indexOf returns -1 if no result found
+          suburb = address[i].short_name;
+        else if (address[i].types.indexOf("administrative_area_level_1") > -1)
+          state = address[i].short_name;
+        else if (address[i].types.indexOf("postal_code") > -1)
+          postcode = address[i].short_name;
+        else if (address[i].types.indexOf("country") > -1)
+          countrycode = address[i].long_name;
+      }
+      agent.add(`For ${suburb} ${state} ${postcode}, ${countrycode}`);
+      // agent.add(`For ${result1.data.results[0]["formatted_address"]}`); // For full address
       agent.add(prayertimes);
     }
     catch(error) {
