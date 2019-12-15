@@ -373,7 +373,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
       const location = agent.getContext('facebook_location').parameters; // get lat and long from fb location card
       const latString = location.lat.toString();
       const longString = location.long.toString();
-      var url = `https://gopray.com.au/?gmw_post=place&gmw_address%5B%5D=Locations&gmw_distance=50&gmw_units=metric&gmw_form=1&paged=1&gmw_per_page=2&gmw_lat=${latString}&gmw_lng=${longString}&gmw_px=pt&action=gmw_post`;
+      var url = `https://gopray.com.au/?gmw_address%5B%5D=Locations&gmw_units=metric&gmw_form=1&paged=1&gmw_per_page=2&gmw_lat=${latString}&gmw_lng=${longString}&action=gmw_post`;
       agentResponses.push(`Looking for prayer locations near you: \n${url}`); // make gopray url out of info
     } catch (err) {
       agent.add("Something went wrong. If you'd like to report it, take a screenshot of the conversation and send it to ibrahapps@gmail.com");
