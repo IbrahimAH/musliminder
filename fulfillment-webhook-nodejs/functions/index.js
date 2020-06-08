@@ -93,7 +93,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   async function prayerTime1DayCity(agent) {
     // get city and country from user
     let lowerCity = agent.parameters.city;
-    lowerCity = `${lowerCity['street-address']}${lowerCity.city} ${lowerCity.island}${lowerCity['subadmin-area']}${lowerCity['admin-area']}`;
+    lowerCity = `${lowerCity['street-address']}${lowerCity.city} ${lowerCity.island}${lowerCity['subadmin-area']}${lowerCity['admin-area']}${lowerCity['business-name']}`;
     let city = lowerCity.charAt(0).toUpperCase() + lowerCity.substring(1); // make first letter uppercase for aesthetics
     city = latinize(lowerCity);
     if (lowerCity === ' ') { return agent.add('Sorry, I couldn\'t find times for this location. Please check spelling or try another location'); }
